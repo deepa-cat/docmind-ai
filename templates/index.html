@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DocMind AI</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#05030F;font-family:'DM Sans',sans-serif;color:#F0EEF8}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:linear-gradient(#FF6BF5,#7B5CF5);border-radius:4px}
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes floatA{0%,100%{transform:translateY(0)}50%{transform:translateY(-25px)}}
+@keyframes floatB{0%,100%{transform:translateY(0)}50%{transform:translateY(20px)}}
+@keyframes floatC{0%,100%{transform:translateX(0)}50%{transform:translateX(18px)}}
+@keyframes glowPulse{0%,100%{box-shadow:0 0 18px #FF6BF530,0 0 40px #7B5CF530}50%{box-shadow:0 0 35px #FF6BF560,0 0 70px #7B5CF550}}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+@keyframes dotB{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-7px)}}
+@keyframes barAnim{0%,100%{height:3px}50%{height:14px}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes tabSlide{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+
+/* BG orbs */
+.orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
+.orb1{width:550px;height:550px;top:-15%;left:-12%;background:radial-gradient(circle,rgba(123,92,245,0.22) 0%,transparent 70%);animation:floatA 9s ease-in-out infinite}
+.orb2{width:650px;height:650px;bottom:-22%;right:-8%;background:radial-gradient(circle,rgba(255,107,245,0.18) 0%,transparent 70%);animation:floatB 11s ease-in-out infinite}
+.orb3{width:320px;height:320px;top:38%;right:18%;background:radial-gradient(circle,rgba(6,182,212,0.13) 0%,transparent 70%);animation:floatC 13s ease-in-out 1s infinite}
+.grid-bg{position:fixed;inset:0;background-image:radial-gradient(rgba(255,255,255,0.022) 1px,transparent 1px);background-size:30px 30px;pointer-events:none;z-index:0}
+.vignette{position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(5,3,15,0.65) 100%);pointer-events:none;z-index:0}
+
+/* Layout */
+#app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#05030F 0%,#0E0525 50%,#05030F 100%)}
+
+/* Header */
+header{padding:14px 28px;display:flex;align-items:center;gap:14px;border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.012);backdrop-filter:blur(12px);position:sticky;top:0;z-index:10}
+.logo-icon{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#FF6BF5,#7B5CF5);display:flex;align-items:center;justify-content:center;font-size:20px;animation:glowPulse 3s ease infinite;flex-shrink:0}
+.logo-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;background:linear-gradient(120deg,#FF6BF5 0%,#06B6D4 40%,#10F5A0 70%,#FF6BF5 100%);background-size:200% auto;animation:shimmer 5s linear infinite;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:0.1em;margin-top:1px}
+.doc-badge{margin-left:auto;padding:7px 16px;border-radius:22px;background:linear-gradient(135deg,rgba(255,107,245,0.12),rgba(123,92,245,0.12));border:1px solid rgba(255,107,245,0.3);display:flex;align-items:center;gap:8px;font-size:12px;color:#FF6BF5;max-width:280px}
+.doc-badge span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-badge button{background:none;border:none;color:rgba(255,120,120,0.7);cursor:pointer;font-size:15px;flex-shrink:0}
+
+/* Body */
+main{flex:1;display:flex;max-width:960px;margin:0 auto;width:100%;padding:0 24px}
+
+/* Upload */
+#upload-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;animation:fadeUp 0.5s ease}
+.upload-card{width:400px;padding:52px 40px;border-radius:24px;cursor:pointer;background:linear-gradient(135deg,rgba(255,107,245,0.06),rgba(123,92,245,0.06));border:2px dashed rgba(255,107,245,0.25);display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;box-shadow:0 0 60px rgba(123,92,245,0.12);transition:all 0.25s}
+.upload-card:hover{transform:scale(1.015);box-shadow:0 0 80px rgba(255,107,245,0.2);border-color:rgba(255,107,245,0.5)}
+.upload-icon-wrap{position:relative;width:80px;height:80px}
+.upload-icon-border{position:absolute;inset:-4px;border-radius:22px;background:linear-gradient(135deg,#FF6BF5,#7B5CF5,#06B6D4,#FF6BF5);background-size:300% 300%;animation:gradShift 3s linear infinite;opacity:0.6}
+.upload-icon{position:relative;width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,rgba(255,107,245,0.2),rgba(123,92,245,0.2));display:flex;align-items:center;justify-content:center;font-size:34px}
+.upload-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,#FF6BF5,#7B5CF5);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.upload-sub{font-size:13px;color:rgba(255,255,255,0.38);line-height:1.8}
+.upload-btn-inner{padding:11px 28px;border-radius:12px;background:linear-gradient(135deg,#FF6BF5,#7B5CF5);color:#fff;font-weight:600;font-size:14px;box-shadow:0 4px 20px rgba(255,107,245,0.4)}
+.feature-badges{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.feat-badge{padding:9px 16px;border-radius:12px;display:flex;align-items:center;gap:7px;font-size:12px}
+
+/* Key setup */
+#key-modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(5,3,15,0.92);backdrop-filter:blur(8px)}
+.key-card{width:440px;padding:36px 32px;border-radius:20px;background:linear-gradient(135deg,rgba(255,107,245,0.08),rgba(123,92,245,0.08));border:1.5px solid rgba(255,107,245,0.3);box-shadow:0 0 60px rgba(123,92,245,0.2)}
+.key-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;background:linear-gradient(90deg,#FF6BF5,#7B5CF5);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.key-desc{font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:20px;line-height:1.7}
+.key-desc a{color:#FF6BF5}
+.key-input{width:100%;padding:11px 14px;border-radius:10px;margin-bottom:12px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,107,245,0.3);color:#F0EEF8;font-size:14px;font-family:'DM Sans',sans-serif;outline:none}
+.key-save{width:100%;padding:12px;border-radius:10px;background:linear-gradient(135deg,#FF6BF5,#7B5CF5);border:none;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 4px 20px rgba(255,107,245,0.4)}
+.key-note{font-size:11px;color:rgba(255,255,255,0.25);margin-top:10px;text-align:center}
+
+/* Workspace */
+#workspace{flex:1;display:flex;flex-direction:column;padding-top:22px;padding-bottom:22px}
+.tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.tab-btn{padding:9px 18px;border-radius:11px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:7px;font-family:'DM Sans',sans-serif;border:1.5px solid;transition:all 0.22s}
+.tab-btn:hover{transform:translateY(-2px);filter:brightness(1.2)}
+.tab-dot{width:5px;height:5px;border-radius:50%}
+.new-doc-btn{margin-left:auto;padding:9px 16px;border-radius:11px;cursor:pointer;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.35);font-size:12px;font-family:'DM Sans',sans-serif;transition:all 0.2s}
+.new-doc-btn:hover{background:rgba(255,255,255,0.08)}
+
+/* Q&A */
+#qa-panel{flex:1;display:flex;flex-direction:column;animation:tabSlide 0.25s ease}
+.messages{flex:1;overflow-y:auto;padding-right:4px;min-height:260px;max-height:calc(100vh - 320px);display:flex;flex-direction:column}
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:28px 0;animation:fadeUp 0.4s ease}
+.empty-icon{width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,rgba(255,107,245,0.15),rgba(123,92,245,0.15));border:1.5px solid rgba(255,107,245,0.3);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 0 20px rgba(255,107,245,0.2)}
+.empty-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;background:linear-gradient(90deg,#FF6BF5,#7B5CF5);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.empty-sub{font-size:12px;color:rgba(255,255,255,0.3);line-height:1.7;text-align:center}
+.suggestion-pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:500px}
+.suggestion{padding:7px 14px;border-radius:20px;background:rgba(255,107,245,0.08);border:1px solid rgba(255,107,245,0.28);color:#FF6BF5;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;transition:all 0.2s}
+.suggestion:hover{transform:scale(1.04);filter:brightness(1.2)}
+
+/* Message bubbles */
+.msg-wrap{display:flex;flex-direction:column;margin-bottom:16px;animation:msgIn 0.28s ease}
+.msg-wrap.user{align-items:flex-end}
+.msg-wrap.ai{align-items:flex-start}
+.msg-row{display:flex;align-items:flex-end;gap:8px;max-width:80%}
+.ai-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#FF6BF5,#7B5CF5);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;margin-bottom:2px;box-shadow:0 0 10px rgba(255,107,245,0.3)}
+.bubble{padding:11px 15px;font-size:13.5px;line-height:1.68;white-space:pre-wrap;word-break:break-word}
+.bubble.user{border-radius:16px 16px 3px 16px}
+.bubble.ai{border-radius:16px 16px 16px 3px;background:rgba(255,255,255,0.045);border:1px solid rgba(255,255,255,0.07)}
+.msg-actions{display:flex;gap:6px;margin-top:5px;margin-left:36px}
+.msg-action-btn{padding:4px 11px;border-radius:7px;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;transition:all 0.2s;display:flex;align-items:center;gap:5px}
+
+/* Input bar */
+.input-wrap{padding-top:14px;border-top:1px solid rgba(255,107,245,0.1);margin-top:10px}
+.input-box{display:flex;align-items:flex-end;gap:10px;background:rgba(255,255,255,0.035);border:1.5px solid rgba(255,107,245,0.2);border-radius:15px;padding:10px 12px;box-shadow:0 0 20px rgba(255,107,245,0.06)}
+textarea{flex:1;background:none;border:none;color:#F0EEF8;font-size:14px;line-height:1.5;min-height:24px;max-height:130px;resize:none;font-family:'DM Sans',sans-serif;outline:none}
+textarea::placeholder{color:rgba(255,255,255,0.22)}
+.mic-btn{width:38px;height:38px;border-radius:11px;flex-shrink:0;background:rgba(255,107,245,0.1);border:1.5px solid rgba(255,107,245,0.3);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;transition:all 0.22s;position:relative}
+.mic-btn.listening{background:linear-gradient(135deg,#FF4444,#FF6BF5);border-color:#FF4444;box-shadow:0 0 20px rgba(255,68,68,0.5);animation:pulse 1s ease infinite}
+.mic-dot{position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:#FF4444;box-shadow:0 0 8px #FF4444;animation:pulse 0.8s ease infinite}
+.send-btn{width:38px;height:38px;border-radius:11px;flex-shrink:0;border:none;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all 0.22s}
+.send-btn:not(:disabled){background:linear-gradient(135deg,#FF6BF5,#7B5CF5);color:#fff;box-shadow:0 0 16px rgba(255,107,245,0.4)}
+.send-btn:not(:disabled):hover{transform:scale(1.08)}
+.send-btn:disabled{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.18);cursor:default}
+.input-hint{font-size:10px;color:rgba(255,255,255,0.16);text-align:center;margin-top:6px}
+.recording-bar{margin-top:8px;padding:7px 14px;border-radius:10px;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);display:flex;align-items:center;gap:8px;font-size:12px;color:#FF8888}
+
+/* Typing dots */
+.typing-dots{display:flex;gap:5px;padding:12px 16px;align-items:center}
+.dot{width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#FF6BF5,#7B5CF5);display:inline-block}
+.dot:nth-child(1){animation:dotB 1.2s ease-in-out 0s infinite}
+.dot:nth-child(2){animation:dotB 1.2s ease-in-out 0.2s infinite}
+.dot:nth-child(3){animation:dotB 1.2s ease-in-out 0.4s infinite}
+
+/* Output panels */
+.out-panel{flex:1;display:flex;flex-direction:column;gap:14px;animation:tabSlide 0.25s ease}
+.out-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.action-btn{padding:11px 26px;border-radius:12px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px;transition:all 0.22s}
+.action-btn:not(:disabled):hover{transform:translateY(-3px);filter:brightness(1.15)}
+.action-btn:disabled{background:rgba(255,255,255,0.06)!important;color:rgba(255,255,255,0.3)!important;cursor:default}
+.tts-btn,.copy-btn{padding:10px 18px;border-radius:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;display:flex;align-items:center;gap:7px;transition:all 0.22s}
+.lang-pills{display:flex;flex-wrap:wrap;gap:6px}
+.lang-pill{padding:6px 13px;border-radius:18px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid;transition:all 0.22s}
+.lang-pill:hover{transform:translateY(-2px);filter:brightness(1.2)}
+.out-content{flex:1;overflow-y:auto;padding:20px 22px;border-radius:16px;font-size:14px;line-height:1.8;white-space:pre-wrap;animation:fadeUp 0.3s ease}
+.out-empty{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;border-radius:16px;min-height:220px;border:1.5px dashed}
+.out-empty-icon{font-size:36px;opacity:0.4}
+.out-empty-text{font-size:13px;color:rgba(255,255,255,0.25)}
+
+/* Loading spinner */
+.spinner{font-size:24px;animation:spin 1s linear infinite;display:inline-block}
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+<div class="grid-bg"></div>
+<div class="vignette"></div>
+
+<div id="app">
+      <div class="key-desc">
+        DocMind AI-ஐ use பண்ண Groq API Key வேணும் — <strong>100% Free!</strong><br/>
+        
+      </div>
+      <input class="key-input" type="password" id="key-input" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx" />
+      <button class="key-save" onclick="saveKey()">Save & Start DocMind AI →</button>
+      <div class="key-note">உங்க browser-லயே locally store ஆகும் — எங்களுக்கு அனுப்ப மாட்டோம் 🔒</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-icon">◫</div>
+    <div>
+      <div class="logo-text">DocMind AI</div>
+      <div class="logo-sub">Q&A · SUMMARIZE · TRANSLATE · KEY POINTS · TTS</div>
+    </div>
+    <div id="doc-badge" style="display:none" class="doc-badge">
+      <span>📄</span>
+      <span id="doc-name-label"></span>
+      <button onclick="clearDoc()">✕</button>
+    </div>
+    </header>
+
+  <main>
+    <!-- Upload screen -->
+    <div id="upload-screen">
+      <div class="upload-card" onclick="document.getElementById('file-input').click()">
+        <div class="upload-icon-wrap">
+          <div class="upload-icon-border"></div>
+          <div class="upload-icon">◫</div>
+        </div>
+        <div>
+          <div class="upload-title">Upload Your Document</div>
+          <div class="upload-sub">PDF, TXT, MD, CSV, JSON, HTML, JS, PY<br/>Click to browse</div>
+        </div>
+        <div class="upload-btn-inner">Choose File</div>
+      </div>
+      <input type="file" id="file-input" accept=".pdf,.txt,.md,.csv,.json,.html,.xml,.py,.js,.ts" style="display:none" onchange="handleFile(event)"/>
+      <div class="feature-badges">
+        <div class="feat-badge" style="background:rgba(255,107,245,0.1);border:1px solid rgba(255,107,245,0.25);color:#FF6BF5">💬 Q&A</div>
+        <div class="feat-badge" style="background:rgba(123,92,245,0.1);border:1px solid rgba(123,92,245,0.25);color:#C77DFF">◎ Summarize</div>
+        <div class="feat-badge" style="background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.25);color:#06B6D4">⇄ Translate</div>
+        <div class="feat-badge" style="background:rgba(16,245,160,0.1);border:1px solid rgba(16,245,160,0.25);color:#10F5A0">✦ Key Points</div>
+        <div class="feat-badge" style="background:rgba(255,159,67,0.1);border:1px solid rgba(255,159,67,0.25);color:#FF9F43">🔊 TTS</div>
+      </div>
+    </div>
+
+    <!-- Workspace (hidden until doc loaded) -->
+    <div id="workspace" style="display:none">
+      <div class="tabs" id="tabs">
+        <button class="tab-btn" data-tab="qa" onclick="switchTab('qa')" style="background:linear-gradient(135deg,rgba(255,107,245,0.2),rgba(255,107,245,0.08));border-color:rgba(255,107,245,0.5);color:#FF6BF5">💬 Q&A <span class="tab-dot" style="background:#FF6BF5;box-shadow:0 0 6px #FF6BF5"></span></button>
+        <button class="tab-btn" data-tab="summarize" onclick="switchTab('summarize')" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);color:rgba(255,255,255,0.42)">◎ Summarize</button>
+        <button class="tab-btn" data-tab="translate" onclick="switchTab('translate')" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);color:rgba(255,255,255,0.42)">⇄ Translate</button>
+        <button class="tab-btn" data-tab="keypoints" onclick="switchTab('keypoints')" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07);color:rgba(255,255,255,0.42)">✦ Key Points</button>
+        <button class="new-doc-btn" onclick="document.getElementById('file-input2').click()">↑ New Doc</button>
+        <input type="file" id="file-input2" accept=".pdf,.txt,.md,.csv,.json,.html,.xml,.py,.js,.ts" style="display:none" onchange="handleFile(event)"/>
+      </div>
+
+      <!-- Q&A Panel -->
+      <div id="qa-panel" class="qa-panel" style="flex:1;display:flex;flex-direction:column;animation:tabSlide 0.25s ease">
+        <div class="messages" id="messages">
+          <div class="empty-state" id="qa-empty">
+            <div class="empty-icon">💬</div>
+            <div>
+              <div class="empty-title">Ask anything about your document</div>
+              <div class="empty-sub">Key dates · Main conclusions · Specific sections · Comparisons</div>
+            </div>
+            <div class="suggestion-pills">
+              <button class="suggestion" onclick="setInput('What is this document about?')">What is this document about?</button>
+              <button class="suggestion" onclick="setInput('What are the main conclusions?')">What are the main conclusions?</button>
+              <button class="suggestion" onclick="setInput('List all key dates or numbers')">List all key dates or numbers</button>
+              <button class="suggestion" onclick="setInput('Explain the most important section')">Explain the most important section</button>
+            </div>
+          </div>
+        </div>
+        <div class="input-wrap">
+          <div class="input-box">
+            <textarea id="qa-input" rows="1" placeholder="Ask a question about your document…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+            <button class="mic-btn" id="mic-btn" onclick="toggleVoice()" title="Voice input">🎤</button>
+            <button class="send-btn" id="send-btn" onclick="sendQA()" disabled>↑</button>
+          </div>
+          <div id="recording-bar" class="recording-bar" style="display:none">
+            <span style="animation:pulse 0.8s ease infinite;display:inline-block">●</span>
+            Recording… speak clearly, then press ⏹ to stop
+          </div>
+          <div class="input-hint">Enter to send · Shift+Enter for new line · 🎤 Voice · ▶ Listen on replies</div>
+        </div>
+      </div>
+
+      <!-- Summarize Panel -->
+      <div id="summarize-panel" style="display:none;flex:1;flex-direction:column;gap:14px;animation:tabSlide 0.25s ease">
+        <div class="out-toolbar">
+          <button class="action-btn" id="sum-btn" onclick="generateSummary()" style="background:linear-gradient(135deg,#C77DFF,#7B5CF5);color:#fff;box-shadow:0 4px 20px rgba(199,125,255,0.4)">◎ Generate Summary</button>
+          <button class="tts-btn" id="sum-tts" onclick="toggleTTS('summary')" style="display:none;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5)">▶ Read Aloud</button>
+          <button class="copy-btn" id="sum-copy" onclick="copyText('summary')" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.38)">⎘ Copy</button>
+        </div>
+        <div id="sum-content" class="out-empty" style="border-color:rgba(199,125,255,0.2);background:rgba(199,125,255,0.02)">
+          <div class="out-empty-icon">◎</div>
+          <div class="out-empty-text">Click "Generate Summary" to begin</div>
+        </div>
+      </div>
+
+      <!-- Translate Panel -->
+      <div id="translate-panel" style="display:none;flex:1;flex-direction:column;gap:14px;animation:tabSlide 0.25s ease">
+        <div class="lang-pills" id="lang-pills"></div>
+        <div class="out-toolbar">
+          <button class="action-btn" id="trans-btn" onclick="generateTranslation()" style="background:linear-gradient(135deg,#06B6D4,#7B5CF5);color:#fff;box-shadow:0 4px 20px rgba(6,182,212,0.35)">⇄ Translate</button>
+          <button class="tts-btn" id="trans-tts" onclick="toggleTTS('translation')" style="display:none;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5)">▶ Listen</button>
+        </div>
+        <div id="trans-content" class="out-empty" style="border-color:rgba(6,182,212,0.2);background:rgba(6,182,212,0.02)">
+          <div class="out-empty-icon">⇄</div>
+          <div class="out-empty-text">Pick a language and click Translate</div>
+        </div>
+      </div>
+
+      <!-- Key Points Panel -->
+      <div id="keypoints-panel" style="display:none;flex:1;flex-direction:column;gap:14px;animation:tabSlide 0.25s ease">
+        <div class="out-toolbar">
+          <button class="action-btn" id="kp-btn" onclick="generateKeyPoints()" style="background:linear-gradient(135deg,#10F5A0,#06B6D4);color:#000;font-weight:600;box-shadow:0 4px 20px rgba(16,245,160,0.35)">✦ Extract Key Points</button>
+          <button class="tts-btn" id="kp-tts" onclick="toggleTTS('keypoints')" style="display:none;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5)">▶ Listen</button>
+        </div>
+        <div id="kp-content" class="out-empty" style="border-color:rgba(16,245,160,0.2);background:rgba(16,245,160,0.02)">
+          <div class="out-empty-icon">✦</div>
+          <div class="out-empty-text">Click "Extract Key Points" to get insights</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let docText = '';
+let docName = '';
+let qaHistory = [];
+let targetLang = 'Tamil';
+let ttsActive = { speaking: false };
+let micActive = { on: false, rec: null };
+let outputs = { summary: '', translation: '', keypoints: '' };
+
+const LANGS = [
+  {c:'Tamil',l:'தமிழ்',f:'🇮🇳'},{c:'Hindi',l:'हिंदी',f:'🇮🇳'},
+  {c:'Spanish',l:'Español',f:'🇪🇸'},{c:'French',l:'Français',f:'🇫🇷'},
+  {c:'German',l:'Deutsch',f:'🇩🇪'},{c:'Japanese',l:'日本語',f:'🇯🇵'},
+  {c:'Arabic',l:'العربية',f:'🇸🇦'},{c:'Portuguese',l:'Português',f:'🇧🇷'},
+  {c:'Korean',l:'한국어',f:'🇰🇷'},{c:'Italian',l:'Italiano',f:'🇮🇹'},
+  {c:'Russian',l:'Русский',f:'🇷🇺'},{c:'Chinese',l:'中文',f:'🇨🇳'},
+];
+
+// ── Init ───────────────────────────────────────────────────────────────────
+window.onload = () => buildLangPills();
+
+// ── Flask API helper ───────────────────────────────────────────────────────
+async function api(endpoint, body) {
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || 'Server error ' + res.status);
+  return data;
+}
+
+// ── Upload ─────────────────────────────────────────────────────────────────
+async function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+
+  document.getElementById('upload-screen').style.display = 'none';
+  document.getElementById('workspace').style.display = 'flex';
+  document.getElementById('doc-badge').style.display = 'flex';
+  document.getElementById('doc-name-label').textContent = '⏳ Loading...';
+
+  qaHistory = [];
+  outputs = { summary: '', translation: '', keypoints: '' };
+  document.getElementById('messages').innerHTML = '';
+  showEmptyState();
+
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    docText = data.text;
+    docName = data.filename;
+    document.getElementById('doc-name-label').textContent = docName;
+  } catch(err) {
+    appendMessage('ai', '⚠️ Upload error: ' + err.message);
+    document.getElementById('doc-name-label').textContent = 'Error';
+  }
+}
+
+function clearDoc() {
+  docText = ''; docName = '';
+  document.getElementById('upload-screen').style.display = 'flex';
+  document.getElementById('workspace').style.display = 'none';
+  document.getElementById('doc-badge').style.display = 'none';
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+const TAB_COLORS = {
+  qa:        { c:'#FF6BF5', bg:'linear-gradient(135deg,rgba(255,107,245,0.2),rgba(255,107,245,0.08))', bd:'rgba(255,107,245,0.5)' },
+  summarize: { c:'#C77DFF', bg:'linear-gradient(135deg,rgba(199,125,255,0.2),rgba(199,125,255,0.08))', bd:'rgba(199,125,255,0.5)' },
+  translate: { c:'#06B6D4', bg:'linear-gradient(135deg,rgba(6,182,212,0.2),rgba(6,182,212,0.08))', bd:'rgba(6,182,212,0.5)' },
+  keypoints: { c:'#10F5A0', bg:'linear-gradient(135deg,rgba(16,245,160,0.2),rgba(16,245,160,0.08))', bd:'rgba(16,245,160,0.5)' },
+};
+function switchTab(tab) {
+  ['qa','summarize','translate','keypoints'].forEach(t => {
+    const panel = document.getElementById(t === 'qa' ? 'qa-panel' : t + '-panel');
+    const btn = document.querySelector(`[data-tab="${t}"]`);
+    if (t === tab) {
+      panel.style.display = 'flex';
+      btn.style.background = TAB_COLORS[t].bg;
+      btn.style.borderColor = TAB_COLORS[t].bd;
+      btn.style.color = TAB_COLORS[t].c;
+      btn.style.boxShadow = `0 0 14px ${TAB_COLORS[t].c}25`;
+      if (!btn.querySelector('.tab-dot')) {
+        const d = document.createElement('span');
+        d.className = 'tab-dot';
+        d.style.cssText = `background:${TAB_COLORS[t].c};box-shadow:0 0 6px ${TAB_COLORS[t].c}`;
+        btn.appendChild(d);
+      }
+    } else {
+      panel.style.display = 'none';
+      btn.style.background = 'rgba(255,255,255,0.04)';
+      btn.style.borderColor = 'rgba(255,255,255,0.07)';
+      btn.style.color = 'rgba(255,255,255,0.42)';
+      btn.style.boxShadow = 'none';
+      btn.querySelector('.tab-dot')?.remove();
+    }
+  });
+}
+
+// ── Q&A ────────────────────────────────────────────────────────────────────
+function showEmptyState() {
+  const msgs = document.getElementById('messages');
+  if (!msgs.querySelector('#qa-empty')) {
+    const div = document.createElement('div');
+    div.id = 'qa-empty';
+    div.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px 0;animation:fadeUp 0.4s ease';
+    div.innerHTML = `
+      <div style="width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,rgba(255,107,245,0.15),rgba(123,92,245,0.15));border:1.5px solid rgba(255,107,245,0.3);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 0 20px rgba(255,107,245,0.2)">💬</div>
+      <div style="text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:6px;background:linear-gradient(90deg,#FF6BF5,#7B5CF5);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Ask anything about your document</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.3);line-height:1.7">Key dates · Main conclusions · Specific sections · Comparisons</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:500px">
+        <button onclick="setInput('What is this document about?')" style="padding:7px 14px;border-radius:20px;background:rgba(255,107,245,0.08);border:1px solid rgba(255,107,245,0.28);color:#FF6BF5;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif">What is this document about?</button>
+        <button onclick="setInput('What are the main conclusions?')" style="padding:7px 14px;border-radius:20px;background:rgba(255,107,245,0.08);border:1px solid rgba(255,107,245,0.28);color:#FF6BF5;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif">What are the main conclusions?</button>
+        <button onclick="setInput('List all key dates or numbers')" style="padding:7px 14px;border-radius:20px;background:rgba(255,107,245,0.08);border:1px solid rgba(255,107,245,0.28);color:#FF6BF5;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif">List all key dates or numbers</button>
+        <button onclick="setInput('Explain the most important section')" style="padding:7px 14px;border-radius:20px;background:rgba(255,107,245,0.08);border:1px solid rgba(255,107,245,0.28);color:#FF6BF5;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif">Explain the most important section</button>
+      </div>`;
+    msgs.appendChild(div);
+  }
+}
+
+function setInput(text) {
+  const inp = document.getElementById('qa-input');
+  inp.value = text;
+  autoResize(inp);
+  document.getElementById('send-btn').disabled = false;
+  inp.focus();
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+  document.getElementById('send-btn').disabled = !el.value.trim();
+  const btn = document.getElementById('send-btn');
+  btn.style.background = el.value.trim() ? 'linear-gradient(135deg,#FF6BF5,#7B5CF5)' : 'rgba(255,255,255,0.06)';
+  btn.style.color = el.value.trim() ? '#fff' : 'rgba(255,255,255,0.18)';
+  btn.style.boxShadow = el.value.trim() ? '0 0 16px rgba(255,107,245,0.4)' : 'none';
+  btn.style.cursor = el.value.trim() ? 'pointer' : 'default';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQA(); }
+}
+
+async function sendQA() {
+  const inp = document.getElementById('qa-input');
+  const q = inp.value.trim();
+  if (!q || !docText) return;
+
+  document.getElementById('qa-empty')?.remove();
+  appendMessage('user', q);
+  qaHistory.push({ role: 'user', content: q });
+  inp.value = '';
+  inp.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+  document.getElementById('send-btn').style.background = 'rgba(255,255,255,0.06)';
+
+  const typId = addTyping();
+  try {
+    const data = await api('/api/chat', {
+      doc_text: docText,
+      history: qaHistory.slice(-7, -1),
+      question: q
+    });
+    removeTyping(typId);
+    appendMessage('ai', data.reply);
+    qaHistory.push({ role: 'assistant', content: data.reply });
+  } catch(err) {
+    removeTyping(typId);
+    appendMessage('ai', '⚠️ ' + err.message);
+  }
+}
+
+function appendMessage(role, text) {
+  const msgs = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;flex-direction:column;margin-bottom:14px;animation:msgIn .28s ease;align-items:' + (role==='user' ? 'flex-end' : 'flex-start');
+  if (role === 'user') {
+    wrap.innerHTML = `<div style="max-width:80%;padding:11px 15px;font-size:13.5px;line-height:1.68;white-space:pre-wrap;word-break:break-word;border-radius:16px 16px 3px 16px;background:linear-gradient(135deg,rgba(255,107,245,0.25),rgba(255,107,245,0.38));border:1px solid rgba(255,107,245,0.4);color:#F0EEF8">${esc(text)}</div>`;
+  } else {
+    const id = 'msg' + Date.now();
+    wrap.innerHTML = `
+      <div style="display:flex;align-items:flex-end;gap:8px;max-width:82%">
+        <div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#FF6BF5,#7B5CF5);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;box-shadow:0 0 10px rgba(255,107,245,0.3)">◫</div>
+        <div id="${id}" style="padding:11px 15px;font-size:13.5px;line-height:1.68;white-space:pre-wrap;word-break:break-word;border-radius:16px 16px 16px 3px;background:rgba(255,255,255,0.045);border:1px solid rgba(255,255,255,0.07)">${esc(text)}</div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:5px;margin-left:36px">
+        <button onclick="speakText(this,'${id}')" style="padding:4px 11px;border-radius:7px;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;background:rgba(255,107,245,0.06);border:1px solid rgba(255,107,245,0.2);color:rgba(255,107,245,0.7)">▶ Listen</button>
+        <button onclick="copyText('${id}')" style="padding:4px 11px;border-radius:7px;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);color:rgba(255,255,255,0.38)">⎘ Copy</button>
+      </div>`;
+  }
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addTyping() {
+  const id = 'typ' + Date.now();
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.id = id;
+  div.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-bottom:14px';
+  div.innerHTML = `<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#FF6BF5,#7B5CF5);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;animation:pulse 1.5s ease infinite">◫</div><div style="display:flex;gap:5px;padding:12px 16px;background:rgba(255,255,255,0.045);border:1px solid rgba(255,255,255,0.07);border-radius:16px 16px 16px 3px;align-items:center">${[0,1,2].map(i=>`<span style="width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#FF6BF5,#7B5CF5);display:inline-block;animation:dotB 1.2s ease-in-out ${i*0.2}s infinite"></span>`).join('')}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+function removeTyping(id) { document.getElementById(id)?.remove(); }
+
+// ── Summarize ──────────────────────────────────────────────────────────────
+async function generateSummary() {
+  const btn = document.getElementById('sum-btn');
+  setGenerating(btn, true, '⏳ Generating…');
+  try {
+    const data = await api('/api/summarize', { doc_text: docText });
+    outputs.summary = data.result;
+    showOutContent('sum-content', data.result, 'rgba(199,125,255,0.15)', 'rgba(199,125,255,0.08)', '#E0D8F8');
+    showBtn('sum-tts'); showBtn('sum-copy');
+  } catch(err) { showOutContent('sum-content', '⚠️ Error: ' + err.message, 'rgba(255,60,60,0.2)', 'rgba(255,60,60,0.05)', '#FFB0B0'); }
+  setGenerating(btn, false, '◎ Generate Summary');
+}
+
+// ── Translate ──────────────────────────────────────────────────────────────
+function buildLangPills() {
+  const c = document.getElementById('lang-pills');
+  if (!c) return;
+  c.innerHTML = '';
+  LANGS.forEach(l => {
+    const btn = document.createElement('button');
+    btn.textContent = l.f + ' ' + l.l;
+    const act = l.c === targetLang;
+    btn.style.cssText = `padding:6px 13px;border-radius:18px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid;transition:all .22s;background:${act?'linear-gradient(135deg,rgba(6,182,212,0.2),rgba(123,92,245,0.15))':'rgba(255,255,255,0.04)'};border-color:${act?'rgba(6,182,212,0.5)':'rgba(255,255,255,0.08)'};color:${act?'#06B6D4':'rgba(255,255,255,0.4)'}`;
+    btn.onclick = () => { targetLang = l.c; buildLangPills(); };
+    c.appendChild(btn);
+  });
+}
+
+async function generateTranslation() {
+  const btn = document.getElementById('trans-btn');
+  setGenerating(btn, true, `⏳ Translating to ${targetLang}…`);
+  try {
+    const data = await api('/api/translate', { doc_text: docText, language: targetLang });
+    outputs.translation = data.result;
+    showOutContent('trans-content', data.result, 'rgba(6,182,212,0.15)', 'rgba(6,182,212,0.05)', '#D8F4F8');
+    showBtn('trans-tts'); showBtn('trans-copy');
+  } catch(err) { showOutContent('trans-content', '⚠️ Error: ' + err.message, 'rgba(255,60,60,0.2)', 'rgba(255,60,60,0.05)', '#FFB0B0'); }
+  setGenerating(btn, false, `⇄ Translate to ${targetLang}`);
+}
+
+// ── Key Points ─────────────────────────────────────────────────────────────
+async function generateKeyPoints() {
+  const btn = document.getElementById('kp-btn');
+  setGenerating(btn, true, '⏳ Extracting…');
+  try {
+    const data = await api('/api/keypoints', { doc_text: docText });
+    outputs.keypoints = data.result;
+    showOutContent('kp-content', data.result, 'rgba(16,245,160,0.15)', 'rgba(16,245,160,0.05)', '#D8F8EE');
+    showBtn('kp-tts'); showBtn('kp-copy');
+  } catch(err) { showOutContent('kp-content', '⚠️ Error: ' + err.message, 'rgba(255,60,60,0.2)', 'rgba(255,60,60,0.05)', '#FFB0B0'); }
+  setGenerating(btn, false, '✦ Extract Key Points');
+}
+
+// ── TTS ────────────────────────────────────────────────────────────────────
+function speakText(btn, id) {
+  const text = document.getElementById(id)?.textContent || '';
+  if (ttsActive.speaking) { window.speechSynthesis.cancel(); ttsActive.speaking = false; btn.textContent = '▶ Listen'; return; }
+  const u = new SpeechSynthesisUtterance(text.replace(/[#*`~_]/g,'').replace(/
++/g,'. '));
+  u.rate = 0.92;
+  u.onstart = () => { ttsActive.speaking = true; btn.textContent = '⏹ Stop'; };
+  u.onend = u.onerror = () => { ttsActive.speaking = false; btn.textContent = '▶ Listen'; };
+  window.speechSynthesis.speak(u);
+}
+
+function toggleTTS(type) {
+  const text = type==='summary' ? outputs.summary : type==='translation' ? outputs.translation : outputs.keypoints;
+  const btnId = type==='summary' ? 'sum-tts' : type==='translation' ? 'trans-tts' : 'kp-tts';
+  const btn = document.getElementById(btnId);
+  if (!text) return;
+  if (ttsActive.speaking) { window.speechSynthesis.cancel(); ttsActive.speaking = false; btn.textContent = '▶ Read Aloud'; return; }
+  const u = new SpeechSynthesisUtterance(text.replace(/[#*`~_]/g,'').replace(/
++/g,'. '));
+  u.rate = 0.92;
+  u.onstart = () => { ttsActive.speaking = true; btn.textContent = '⏹ Stop'; };
+  u.onend = u.onerror = () => { ttsActive.speaking = false; btn.textContent = '▶ Read Aloud'; };
+  window.speechSynthesis.speak(u);
+}
+
+// ── Voice Input ────────────────────────────────────────────────────────────
+function startVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('Voice input: Chrome browser தேவை!'); return; }
+  const btn = document.getElementById('mic-btn');
+  const bar = document.getElementById('rec-bar');
+  if (micActive.on) { micActive.rec?.stop(); return; }
+  micActive.rec = new SR();
+  micActive.rec.lang = 'en-US';
+  micActive.rec.interimResults = true;
+  micActive.rec.onstart = () => { micActive.on = true; btn.style.background = 'linear-gradient(135deg,#FF4444,#FF6BF5)'; btn.style.boxShadow = '0 0 20px rgba(255,68,68,0.5)'; btn.textContent = '⏹'; bar.style.display = 'flex'; };
+  micActive.rec.onresult = e => { const t = Array.from(e.results).map(r=>r[0].transcript).join(''); document.getElementById('qa-input').value = t; autoResize(document.getElementById('qa-input')); };
+  micActive.rec.onend = micActive.rec.onerror = () => { micActive.on = false; btn.style.background = 'rgba(255,107,245,0.1)'; btn.style.boxShadow = 'none'; btn.textContent = '🎤'; bar.style.display = 'none'; };
+  micActive.rec.start();
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function setGenerating(btn, on, label) { btn.disabled = on; btn.innerHTML = label; }
+function showBtn(id) { document.getElementById(id).style.display = 'flex'; }
+function showOutContent(id, text, bc, bg, color) {
+  const el = document.getElementById(id);
+  el.style.cssText = `flex:1;overflow-y:auto;padding:18px 22px;border-radius:16px;font-size:14px;line-height:1.8;white-space:pre-wrap;animation:fadeUp .3s ease;border:1px solid ${bc};background:${bg};color:${color}`;
+  el.textContent = text;
+}
+function copyOut(type) {
+  const text = type==='summary' ? outputs.summary : type==='translation' ? outputs.translation : outputs.keypoints;
+  navigator.clipboard?.writeText(text || '');
+  const ids = {summary:'sum-copy',translation:'trans-copy',keypoints:'kp-copy'};
+  const btn = document.getElementById(ids[type]);
+  if(btn){const p=btn.textContent;btn.textContent='✓ Copied!';setTimeout(()=>btn.textContent=p,1500);}
+}
+function copyText(id) { navigator.clipboard?.writeText(document.getElementById(id)?.textContent||''); }
+function esc(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/
+/g,'<br>'); }
+</script>
+</body>
+</html>
